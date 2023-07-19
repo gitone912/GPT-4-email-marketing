@@ -1,10 +1,11 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 import os
 from docx import Document
@@ -55,7 +56,7 @@ def generate_and_send_email_documents(excel_sheet_name):
         sys.stdout = open("output.txt", "w")
         prompt = f"You are an email marketing expert. You already have the email templates, but are tasked with visiting this website: {website} and coming out with a 40-50 complete word compliment about their services and accomplishments to include in the email."
         # Testing to see - PUTS THE CONTENT TOGETHER
-        print(f"Hey {Lead1},{Lead2}")
+        print(f"Hey {Lead1}")
         print()
         print(f"I was just going through {company_name}'s website and I just had to reach out to you.")
         print()
@@ -93,6 +94,7 @@ def generate_and_send_email_documents(excel_sheet_name):
 
     print("The documents have been generated and emails have been sent.")
 
+
 def home(request):
     if request.method == 'POST':
         # Handle the file upload
@@ -109,8 +111,8 @@ def home(request):
             # Clean up the temporary file
             os.remove('temp.xlsx')
 
-            return Response("Success", status=status.HTTP_200_OK)
+            return HttpResponse("The documents have been generated and emails have been sent.")
         else:
-            return Response("No file", status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponse("No file was uploaded.")
 
     return render(request, 'index.html')
