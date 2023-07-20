@@ -2,13 +2,55 @@
 <html>
 <head>
     <title>Email Generation</title>
+    <!-- Add Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <h1>Email Generation</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="file" name="excel_sheet" accept=".xlsx">
-        <input type="submit" value="Generate Documents and Send Emails">
-    </form>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <h1 class="text-center">Email Generation</h1>
+                <form method="post" enctype="multipart/form-data" class="mt-4">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="excel_sheet" class="d-block">Upload Excel Sheet</label>
+                        <input type="file" id="excel_sheet" name="excel_sheet" accept=".xlsx" class="form-control">
+                    </div>
+                    <div class="form-group text-center">
+                        <input type="submit" value="Generate Documents and Send Emails" class="btn btn-primary">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Uploaded file details card -->
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Uploaded File Details</h4>
+                        <!-- Display the uploaded file name here -->
+                        <p class="card-text">File Name: <span id="file_name"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Bootstrap JavaScript and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // JavaScript to display the uploaded file name
+        $(document).ready(function() {
+            // Listen for changes in the file input
+            $("#excel_sheet").on("change", function() {
+                // Get the file name and display it in the card
+                var fileName = $(this).val().split("\\").pop();
+                $("#file_name").text(fileName);
+            });
+        });
+    </script>
 </body>
 </html>

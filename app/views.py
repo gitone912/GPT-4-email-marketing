@@ -1,12 +1,8 @@
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.http import HttpResponse
+from django.shortcuts import render
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib import messages
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import api_view
-import time
 import os
 from docx import Document
 import openpyxl
@@ -26,8 +22,11 @@ def generate_and_send_email_documents(excel_sheet_name):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    # Determine the maximum row in the Leads sheet
+    max_row = Leads.max_row
+
     # Iterate over rows in the Leads sheet, starting from row 2
-    for row_index, row in enumerate(Leads.iter_rows(min_row=2, values_only=True), start=2):
+    for row_index, row in enumerate(Leads.iter_rows(min_row=2, max_row=max_row, values_only=True), start=2):
         # Read values from specific cells and store them in variables
         company_name = Leads[f'B{row_index}'].value
         TG = Leads[f'C{row_index}'].value
@@ -56,7 +55,7 @@ def generate_and_send_email_documents(excel_sheet_name):
         sys.stdout = open("output.txt", "w")
         prompt = f"Hey ChatGPT, as an email marketing expert, you possess exceptional insight into crafting engaging messages. Today, your task is to visit {company_name}'s website: {website} and craft a  compliment that specifically references the exact highlights the company's outstanding services/accomplishments and the importance of said services in today's market. WORDS TO AVOID: 'their',' they', 'congratulations ', 'thank you'. APPROACHES TO AVOID: Talking about customer service. WORDS TO USE: 'your' TRY TO: make the paragraph fluent, reflecting genuine admiration for the company's offerings. MUST BE: be specific about their service offerings. MUST BE: within 30-35 words. DO NOT: miss any of these instructions."
         # Testing to see - PUTS THE CONTENT TOGETHER
-        if Lead2 == None:
+        if Lead2 is None:
             print(f"Hi {Lead1},")
         else:
             print(f"Hi {Lead1} & {Lead2}")
@@ -83,7 +82,7 @@ def generate_and_send_email_documents(excel_sheet_name):
         # Generate a unique filename based on the company name
         filename = f"{company_name}_output.docx"
 
-        # Saving the document with company name as file name in the output folder
+        # Saving the document with the company name as file name in the output folder
         doc.save(os.path.join(output_folder, filename))
 
         # Send email to the respective email IDs
@@ -94,10 +93,8 @@ def generate_and_send_email_documents(excel_sheet_name):
             [Email_1, Email_2],  # You can add more recipients or customize this list based on your needs
             fail_silently=True,
         )
-        time.sleep(60)
 
     print("The documents have been generated and emails have been sent.")
-
 
 def home(request):
     if request.method == 'POST':
