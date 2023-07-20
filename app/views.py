@@ -5,43 +5,36 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 import os
 from docx import Document
-import openpyxl
-import sys
+import pandas as pd
 from .gptkey import generate_prompt
 
 def generate_and_send_email_documents(excel_sheet_name):
-    # Loading the Excel workbook
-    workbook = openpyxl.load_workbook(excel_sheet_name)
-
-    # Selecting a sheet within the Excel workbook
-    Leads = workbook['Leads']
-    Variations = workbook['Variations']
+    # Loading the Excel workbook using pandas
+    df_leads = pd.read_excel(excel_sheet_name, sheet_name='Leads')
+    df_variations = pd.read_excel(excel_sheet_name, sheet_name='Variations')
 
     # Create the output folder if it doesn't exist
     output_folder = "OutputDocs"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Determine the maximum row in the Leads sheet
-    max_row = Leads.max_row
-
-    # Iterate over rows in the Leads sheet, starting from row 2
-    for row_index, row in enumerate(Leads.iter_rows(min_row=2, max_row=max_row, values_only=True), start=2):
+    # Iterate over rows in the Leads sheet
+    for _, row in df_leads.iterrows():
         # Read values from specific cells and store them in variables
-        company_name = Leads[f'B{row_index}'].value
-        TG = Leads[f'C{row_index}'].value
-        E_Variation = Leads[f'D{row_index}'].value
-        Lead1 = Leads[f'E{row_index}'].value
-        Lead2 = Leads[f'F{row_index}'].value
-        Email_1 = Leads[f'G{row_index}'].value
-        Email_2 = Leads[f'H{row_index}'].value
-        website = Leads[f'I{row_index}'].value
+        company_name = row['Company Name']
+        TG = row['TG1/TG2']
+        E_Variation = row['Email Variation']
+        Lead1 = row['Lead_1']
+        Lead2 = row['Lead_2']
+        Email_1 = row['Email']
+        Email_2 = row['Email 2']
+        website = row['Website']
 
         # Assigning the Variation
         tosend = ""
-        V1 = Variations['A2'].value
-        V2 = Variations['B2'].value
-        V3 = Variations['C2'].value
+        V1 = df_variations.at[0, 'V1']
+        V2 = df_variations.at[0, 'V2']
+        V3 = df_variations.at[0, 'V3']
         # Ensuring the correct email is sent
         if E_Variation == 1:
             tosend = V1
@@ -50,39 +43,24 @@ def generate_and_send_email_documents(excel_sheet_name):
         else:
             tosend = V3
 
-        # Redirect standard output to Word document
-        output = sys.stdout
-        sys.stdout = open("output.txt", "w")
-        prompt = f"Hey ChatGPT, as an email marketing expert, you possess exceptional insight into crafting engaging messages. Today, your task is to visit {company_name}'s website: {website} and craft a  compliment that specifically references the exact highlights the company's outstanding services/accomplishments and the importance of said services in today's market. WORDS TO AVOID: 'their',' they', 'congratulations ', 'thank you'. APPROACHES TO AVOID: Talking about customer service. WORDS TO USE: 'your' TRY TO: make the paragraph fluent, reflecting genuine admiration for the company's offerings. MUST BE: be specific about their service offerings. MUST BE: within 30-35 words. DO NOT: miss any of these instructions."
-        # Testing to see - PUTS THE CONTENT TOGETHER
-        if Lead2 is None:
-            print(f"Hi {Lead1},")
-        else:
-            print(f"Hi {Lead1} & {Lead2}")
-        print()
-        print(f"I was just going through {company_name}'s website and I just had to reach out to you.")
-        print()
-        print(generate_prompt(prompt))
-        print()
-        print(tosend)
-        print()
-        print("Thanks & Regards,")
+        # Generate the email content
+        prompt = f"Hey ChatGPT, as an email marketing expert, you possess exceptional insight into crafting engaging messages. Today, your task is to visit {company_name}'s website: {website} and craft a compliment that specifically references the exact highlights the company's outstanding services/accomplishments and the importance of said services in today's market. WORDS TO AVOID: 'their',' they', 'congratulations ', 'thank you'. APPROACHES TO AVOID: Talking about customer service. WORDS TO USE: 'your' TRY TO: make the paragraph fluent, reflecting genuine admiration for the company's offerings. MUST BE: be specific about their service offerings. MUST BE: within 30-35 words. DO NOT: miss any of these instructions."
+        greeting = f"Hi {Lead1}" if pd.isna(Lead2) else f"Hi {Lead1} & {Lead2}"
 
-        # Restore standard output
-        sys.stdout = output
+        content = f"{greeting}\n\n"
+        content += f"I was just going through {company_name}'s website and I just had to reach out to you.\n\n"
+        content += f"{generate_prompt(prompt)}\n\n"
+        content += f"{tosend}\n\n"
+        content += "Thanks & Regards,"
 
-        # Read the content from the temporary file
-        with open("output.txt", "r") as file:
-            content = file.read()
-
-        # Add the content to the Word document
+        # Create the Word document and add the content
         doc = Document()
         doc.add_paragraph(content)
 
         # Generate a unique filename based on the company name
         filename = f"{company_name}_output.docx"
 
-        # Saving the document with the company name as file name in the output folder
+        # Saving the document with the company name as the file name in the output folder
         doc.save(os.path.join(output_folder, filename))
 
         # Send email to the respective email IDs
