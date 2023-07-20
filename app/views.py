@@ -6,7 +6,7 @@ from django.contrib import messages
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-
+import time
 import os
 from docx import Document
 import openpyxl
@@ -54,9 +54,12 @@ def generate_and_send_email_documents(excel_sheet_name):
         # Redirect standard output to Word document
         output = sys.stdout
         sys.stdout = open("output.txt", "w")
-        prompt = f"You are an email marketing expert. You already have the email templates, but are tasked with visiting this website: {website} and coming out with a 40-50 complete word compliment about their services and accomplishments to include in the email."
+        prompt = f"Hey ChatGPT, as an email marketing expert, you possess exceptional insight into crafting engaging messages. Today, your task is to visit {company_name}'s website: {website} and craft a  compliment that specifically references the exact highlights the company's outstanding services/accomplishments and the importance of said services in today's market. WORDS TO AVOID: 'their',' they', 'congratulations ', 'thank you'. APPROACHES TO AVOID: Talking about customer service. WORDS TO USE: 'your' TRY TO: make the paragraph fluent, reflecting genuine admiration for the company's offerings. MUST BE: be specific about their service offerings. MUST BE: within 30-35 words. DO NOT: miss any of these instructions."
         # Testing to see - PUTS THE CONTENT TOGETHER
-        print(f"Hey {Lead1}")
+        if Lead2 == None:
+            print(f"Hi {Lead1},")
+        else:
+            print(f"Hi {Lead1} & {Lead2}")
         print()
         print(f"I was just going through {company_name}'s website and I just had to reach out to you.")
         print()
@@ -91,6 +94,7 @@ def generate_and_send_email_documents(excel_sheet_name):
             [Email_1, Email_2],  # You can add more recipients or customize this list based on your needs
             fail_silently=True,
         )
+        time.sleep(60)
 
     print("The documents have been generated and emails have been sent.")
 
